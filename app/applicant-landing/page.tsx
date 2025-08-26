@@ -1,102 +1,58 @@
-// Updated applicant landing page: page-applicant.tsx
 import { SiteHeader } from "@/components/site-header";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
+import { getApplicantSubmissions } from "@/server/actions";
+import Link from "next/link";
+import { AppSidebar } from "@/components/app-sidebar";
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"; // Added for sectioned views
 
-export default function ApplicantLandingPage() {
+export default async function ApplicantLandingPage() {
+  const submissions = await getApplicantSubmissions();
+
   return (
-    <SidebarProvider
-      style={
-        {
-          "--sidebar-width": "calc(var(--spacing) * 72)",
-          "--header-height": "calc(var(--spacing) * 12)",
-        } as React.CSSProperties
-      }
-    >
+    <SidebarProvider>
+      <AppSidebar variant="inset" />
       <SidebarInset>
-        <div className="flex flex-col min-h-screen">
-          <SiteHeader />
-          <div className="flex-1 container mx-auto py-6">
-            <h1 className="text-3xl font-bold mb-6">Welcome, Applicant!</h1>
-            <p className="text-muted-foreground mb-8">
-              Explore job opportunities, take personality tests, view results, and manage your profile.
-            </p>
-            
-            {/* Updated to use Tabs for better organization of sections */}
-            <Tabs defaultValue="jobs" className="space-y-4">
-              <TabsList>
-                <TabsTrigger value="jobs">Job Opportunities</TabsTrigger>
-                <TabsTrigger value="tests">Tests & Results</TabsTrigger>
-                <TabsTrigger value="profile">Profile</TabsTrigger>
-              </TabsList>
-              
-              <TabsContent value="jobs" className="space-y-4">
-                <Card>
-                  <CardHeader>
-                    <CardTitle>Search Jobs</CardTitle>
-                    <CardDescription>Browse available positions and apply with a personality test.</CardDescription>
-                  </CardHeader>
-                  <CardContent>
-                    {/* Placeholder for job list - will fetch from API later */}
-                    <div className="text-muted-foreground mb-4">Job listings will appear here.</div>
-                    <Button>Start Searching</Button>
-                  </CardContent>
-                </Card>
-                <Card>
-                  <CardHeader>
-                    <CardTitle>Application Tracker</CardTitle>
-                    <CardDescription>Track your submitted applications and status.</CardDescription>
-                  </CardHeader>
-                  <CardContent>
-                    {/* Placeholder for tracker list */}
-                    <div className="text-muted-foreground mb-4">Your applications will be listed here.</div>
-                    <Button>View Tracker</Button>
-                  </CardContent>
-                </Card>
-              </TabsContent>
-              
-              <TabsContent value="tests" className="space-y-4">
-                <Card>
-                  <CardHeader>
-                    <CardTitle>Pending Tests</CardTitle>
-                    <CardDescription>View and take personality tests for job applications.</CardDescription>
-                  </CardHeader>
-                  <CardContent>
-                    {/* Placeholder for pending tests list */}
-                    <div className="text-muted-foreground mb-4">No pending tests. Check job listings to start one.</div>
-                    <Button>Take a Test</Button> {/* Will link to test page later */}
-                  </CardContent>
-                </Card>
-                <Card>
-                  <CardHeader>
-                    <CardTitle>Submitted Results</CardTitle>
-                    <CardDescription>Review your past test results.</CardDescription>
-                  </CardHeader>
-                  <CardContent>
-                    {/* Placeholder for results list */}
-                    <div className="text-muted-foreground mb-4">Your submitted results will appear here.</div>
-                    <Button>View Results</Button>
-                  </CardContent>
-                </Card>
-              </TabsContent>
-              
-              <TabsContent value="profile" className="space-y-4">
-                <Card>
-                  <CardHeader>
-                    <CardTitle>Update Profile</CardTitle>
-                    <CardDescription>Keep your profile and resume up-to-date. Optionally view org-averaged results if allowed.</CardDescription>
-                  </CardHeader>
-                  <CardContent>
-                    {/* Placeholder for profile form/edit */}
-                    <div className="text-muted-foreground mb-4">Profile details and averages will load here.</div>
-                    <Button>Edit Profile</Button>
-                  </CardContent>
-                </Card>
-              </TabsContent>
-            </Tabs>
-          </div>
+        <SiteHeader />
+        <div className="flex-1 container mx-auto py-6">
+          <h1 className="text-3xl font-bold mb-6">Applicant Dashboard</h1>
+          <Card>
+            <CardHeader>
+              <CardTitle>Your Submitted Tests</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Recruiter Name</TableHead>
+                    <TableHead>Organization</TableHead>
+                    <TableHead>Submission Date</TableHead>
+                    <TableHead>Actions</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {submissions.map((sub) => (
+                    <TableRow key={sub.submissionId}>
+                      <TableCell>{sub.recruiterName}</TableCell>
+                      <TableCell>{sub.recruiterOrg}</TableCell>
+                      <TableCell>{sub.submittedAt.toLocaleDateString()}</TableCell>
+                      <TableCell>
+                        <Button variant="outline" asChild>
+                          <Link href={`/submission/${sub.submissionId}`}>View</Link>
+                        </Button>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                  {submissions.length === 0 && (
+                    <TableRow>
+                      <TableCell colSpan={4} className="text-center">No submissions yet</TableCell>
+                    </TableRow>
+                  )}
+                </TableBody>
+              </Table>
+            </CardContent>
+          </Card>
         </div>
       </SidebarInset>
     </SidebarProvider>

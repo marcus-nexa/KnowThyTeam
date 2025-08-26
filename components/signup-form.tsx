@@ -28,14 +28,18 @@ import {
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/select"; // New: import Shadcn Select
+} from "@/components/ui/select";
 
 const formSchema = z.object({
   username: z.string().min(3),
   email: z.string().email(),
   password: z.string().min(8),
-  role: z.enum(["recruiter", "applicant"]), // New: required role enum
-})
+  role: z.enum(["recruiter", "applicant"]),
+  org: z.string().optional(), // Required conditionally in form
+}).refine((data) => data.role !== "recruiter" || !!data.org, {
+  message: "Organization is required for recruiters",
+  path: ["org"],
+});
 
 export function SignupForm({
   className,
@@ -44,8 +48,6 @@ export function SignupForm({
   const [isLoading, setIsLoading] = useState(false);
 
   const router = useRouter();
-  
-  
 
   const signInWithGoogle = async () => {
       await authClient.signIn.social({
@@ -54,32 +56,33 @@ export function SignupForm({
     });
   };
 
-  // 1. Define your form.
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
       username: "",
       email: "",
       password: "",
-      role: "applicant", // New: default to applicant
+      role: "applicant",
+      org: "",
     },
   })
- 
-  // 2. Define a submit handler.
+
   async function onSubmit(values: z.infer<typeof formSchema>) {
     setIsLoading(true);
 
-    const { success, message } = await signUp(values.email, values.password, values.username, values.role); // New: pass role
+    const { success, message } = await signUp(values.email, values.password, values.username, values.role, values.org);
 
     if (success) {
       toast.success(message as string);
-      router.push("/dashboard") // Redirect to dashboard; middleware will handle role-based logic
+      router.push("/dashboard")
     } else {
       toast.error(message as string);
     }
 
     setIsLoading(false);
   }
+
+  const selectedRole = form.watch("role"); // For conditional render
 
   return (
     <Form {...form}>
@@ -146,7 +149,6 @@ export function SignupForm({
             </div>
           </div>
         </div>
-        {/* New: Role dropdown */}
         <div className="grid gap-3">
           <FormField
             control={form.control}
@@ -170,6 +172,24 @@ export function SignupForm({
             )}
           />
         </div>
+        {/* New: Conditional org input */}
+        {selectedRole === "recruiter" && (
+          <div className="grid gap-3">
+            <FormField
+              control={form.control}
+              name="org"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Organization</FormLabel>
+                  <FormControl>
+                    <Input placeholder="Acme Inc." {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          </div>
+        )}
         <Button type="submit" className="w-full" disabled={isLoading}>
           {isLoading ? (<Loader2 className="size-4 animate-spin" />) : ("Sign up")}
         </Button>
@@ -178,7 +198,7 @@ export function SignupForm({
             Or continue with
           </span>
         </div>
-        <Button type="button" variant="outline" className="w-full" onClick={signInWithGoogle}> {/* need to create one for signing up */}
+        <Button type="button" variant="outline" className="w-full" onClick={signInWithGoogle}>
         <svg
           xmlns="http://www.w3.org/2000/svg"
           viewBox="0 0 512 512"

@@ -19,11 +19,16 @@ export const auth = betterAuth({
         provider: "pg", // or "mysql", "sqlite"
         schema,
     }),
-    user: { // New: extend user with custom role field
+    user: {
         additionalFields: {
             role: {
                 type: "string",
                 required: true,
+                input: true,
+            },
+            org: { // New
+                type: "string",
+                required: false,
                 input: true,
             },
         },

@@ -1,82 +1,78 @@
-// Updated recruiter dashboard: page.tsx
-import { AppSidebar } from "@/components/app-sidebar"
-import { ChartAreaInteractive } from "@/components/chart-area-interactive"
-import { DataTable } from "@/components/data-table"
-import { SectionCards } from "@/components/section-cards"
-import { SiteHeader } from "@/components/site-header"
-import {
-  SidebarInset,
-  SidebarProvider,
-} from "@/components/ui/sidebar"
-import { Button } from "@/components/ui/button" // Added for placeholder buttons
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card" // Added for placeholder sections
+import { SiteHeader } from "@/components/site-header";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+//
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { getRecruiterSubmissions } from "@/server/actions";
+import Link from "next/link";
+import { AppSidebar } from "@/components/app-sidebar"; // If you want sidebar
+import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
+import TestCreationForm from "./test-creation-form";
 
-import data from "./data.json" // Keep existing, but we'll replace/augment later
+// form schema moved to client component
 
-export default function RecruiterDashboard() { // Renamed for clarity
+export default async function DashboardPage() {
+  const submissions = await getRecruiterSubmissions(); // Server fetch
+
   return (
-    <SidebarProvider
-      style={
-        {
-          "--sidebar-width": "calc(var(--spacing) * 72)",
-          "--header-height": "calc(var(--spacing) * 12)",
-        } as React.CSSProperties
-      }
-    >
+    <SidebarProvider>
       <AppSidebar variant="inset" />
       <SidebarInset>
         <SiteHeader />
-        <div className="flex flex-1 flex-col">
-          <div className="@container/main flex flex-1 flex-col gap-2">
-            <div className="flex flex-col gap-4 py-4 md:gap-6 md:py-6">
-              {/* Existing SectionCards - can be used for quick stats like # of jobs, applicants */}
-              <SectionCards />
-              
-              {/* Placeholder: Job Posting Section */}
-              <Card>
-                <CardHeader className="flex flex-row items-center justify-between">
-                  <CardTitle>Job Listings</CardTitle>
-                  {/* Placeholder button for creating new job - will hook to form later */}
-                  <Button variant="default">Post New Job</Button>
-                </CardHeader>
-                <CardContent>
-                  {/* Placeholder for job list - will replace with dynamic DataTable or list */}
-                  <div className="text-muted-foreground">No jobs posted yet. Click Post New Job to create one.</div>
-                  {/* Existing DataTable can be repurposed for jobs/applicants; for now, keep as is */}
-                  <DataTable data={data} /> {/* Augment data.json later for jobs */}
-                </CardContent>
-              </Card>
-              
-              {/* Placeholder: Applicant Results Dashboard */}
-              <Card>
-                <CardHeader>
-                  <CardTitle>Applicant Results</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  {/* Placeholder for results table/chart - will fetch from API */}
-                  <div className="text-muted-foreground">Applicant test results will appear here once submissions are received.</div>
-                  {/* Reuse existing chart for visualization of personality traits averages */}
-                  <ChartAreaInteractive /> {/* Will update props/data for trait scores later */}
-                </CardContent>
-              </Card>
-              
-              {/* Placeholder: Teams and Profiles Section */}
-              <Card>
-                <CardHeader className="flex flex-row items-center justify-between">
-                  <CardTitle>Teams & Profiles</CardTitle>
-                  {/* Placeholder button for managing teams */}
-                  <Button variant="outline">Manage Teams</Button>
-                </CardHeader>
-                <CardContent>
-                  {/* Placeholder for team list/profiles */}
-                  <div className="text-muted-foreground">View team members, profiles, and averaged results here.</div>
-                  {/* Could add a simple table or cards here later */}
-                </CardContent>
-              </Card>
-            </div>
-          </div>
+        <div className="container mx-auto py-6">
+          <h1 className="text-3xl font-bold mb-6">Recruiter Dashboard</h1>
+          
+          {/* Test Creation Form */}
+          <Card className="mb-8">
+            <CardHeader>
+              <CardTitle>Create New Test</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <TestCreationForm />
+            </CardContent>
+          </Card>
+          
+          {/* Submissions List */}
+          <Card>
+            <CardHeader>
+              <CardTitle>Applicant Submissions</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Applicant Name</TableHead>
+                    <TableHead>Organization</TableHead>
+                    <TableHead>Submission Date</TableHead>
+                    <TableHead>Actions</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {submissions.map((sub) => (
+                    <TableRow key={sub.submissionId}>
+                      <TableCell>{sub.applicantName || "Guest"}</TableCell>
+                      <TableCell>{sub.org}</TableCell>
+                      <TableCell>{sub.submittedAt.toLocaleDateString()}</TableCell>
+                      <TableCell>
+                        <Button variant="outline" asChild>
+                          <Link href={`/submission/${sub.submissionId}`}>View</Link>
+                        </Button>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                  {submissions.length === 0 && (
+                    <TableRow>
+                      <TableCell colSpan={4} className="text-center">No submissions yet</TableCell>
+                    </TableRow>
+                  )}
+                </TableBody>
+              </Table>
+            </CardContent>
+          </Card>
         </div>
       </SidebarInset>
     </SidebarProvider>
-  )
+  );
 }
+
+// Test creation form moved to ./test-creation-form

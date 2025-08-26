@@ -26,14 +26,15 @@ export const signIn = async (email: string, password: string) => {
 
 }
 
-export const signUp = async (email: string, password: string, username: string, role: string) => { // New: accept role
+export const signUp = async (email: string, password: string, username: string, role: string, org?: string) => { // New: optional org
     try {
     await auth.api.signUpEmail({
         body: {
             email,
             password,
             name: username,
-            role, // New: pass role
+            role,
+            org, // New: pass if provided
         }
     })
 

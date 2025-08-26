@@ -1,6 +1,14 @@
-import { pgTable, text, timestamp, boolean, pgEnum } from "drizzle-orm/pg-core";
+import { pgTable, text, timestamp, boolean, pgEnum, uuid, jsonb } from "drizzle-orm/pg-core";
 
 export const roleEnum = pgEnum("role_enum", ["recruiter", "applicant"]);
+
+export const personalityTraitEnum = pgEnum("personality_trait_enum", [
+  "extraversion",
+  "agreeableness",
+  "conscientiousness",
+  "neuroticism",
+  "openness",
+]); // Expand as needed
 
 export const user = pgTable("user", {
   id: text("id").primaryKey(),
@@ -16,7 +24,8 @@ export const user = pgTable("user", {
   updatedAt: timestamp("updated_at")
     .$defaultFn(() => /* @__PURE__ */ new Date())
     .notNull(),
-  role: roleEnum("role").notNull(), // New: required role enum
+  role: roleEnum("role").notNull(),
+  org: text("org"), // New: optional, but required for recruiters via form
 });
 
 export const session = pgTable("session", {
@@ -63,6 +72,34 @@ export const verification = pgTable("verification", {
   ),
 });
 
-export const schema = { user, session, account, verification };
+// New: Tests table
+export const tests = pgTable("tests", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  recruiterId: text("recruiter_id")
+    .notNull()
+    .references(() => user.id, { onDelete: "cascade" }),
+  traits: personalityTraitEnum("traits").array().notNull(),
+  questions: jsonb("questions").notNull(), // e.g., [{text: "Question 1", type: "likert", options: ["1","2","3","4","5"]}, ...]
+  createdAt: timestamp("created_at")
+    .$defaultFn(() => new Date())
+    .notNull(),
+});
+
+// New: Submissions table
+export const submissions = pgTable("submissions", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  testId: uuid("test_id")
+    .notNull()
+    .references(() => tests.id, { onDelete: "cascade" }),
+  applicantId: text("applicant_id") // Nullable for guests initially
+    .references(() => user.id, { onDelete: "set null" }),
+  guestId: uuid("guest_id"), // For temp guest submissions
+  answers: jsonb("answers").notNull(), // e.g., {q1: "3", q2: "Agree", ...}
+  submittedAt: timestamp("submitted_at")
+    .$defaultFn(() => new Date())
+    .notNull(),
+});
+
+export const schema = { user, session, account, verification, tests, submissions };
 
 /* note! when adding a new content (ie. column or table) to the schema.ts, remember to type "npx drizzle-kit push" to push the new content to the neon db. */

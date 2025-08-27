@@ -5,9 +5,14 @@ import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { claimGuestSubmission } from "@/server/actions";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 
-export default function SubmissionClient({ submission }: { submission: any }) {
+interface Submission {
+  id: string;
+  answers: Record<string, unknown> | unknown[];
+}
+
+export default function SubmissionClient({ submission }: { submission: Submission }) {
   const searchParams = useSearchParams();
   const isGuest = searchParams.get("guest") === "true";
   const [claiming, setClaiming] = useState(false);

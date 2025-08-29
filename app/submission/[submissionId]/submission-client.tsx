@@ -9,7 +9,7 @@ import { useState } from "react";
 
 interface Submission {
   id: string;
-  answers: Record<string, unknown> | unknown[];
+  answers: unknown;
 }
 
 export default function SubmissionClient({ submission }: { submission: Submission }) {
@@ -58,5 +58,3 @@ export default function SubmissionClient({ submission }: { submission: Submissio
     </div>
   );
 }
-
-
